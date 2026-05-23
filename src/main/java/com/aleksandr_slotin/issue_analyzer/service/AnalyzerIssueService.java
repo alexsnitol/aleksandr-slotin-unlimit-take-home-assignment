@@ -7,11 +7,8 @@ import com.aleksandr_slotin.issue_analyzer.repository.AnalyzeIssueReportReposito
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Limit;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Objects;
@@ -24,9 +21,6 @@ public class AnalyzerIssueService {
     private final AnalyseIssueAiService analyseIssueAiService;
     private final AnalyzeIssueReportRepository analyzeIssueReportRepository;
     private final AnalyzeIssueReportMapper analyzeIssueReportMapper;
-    @Lazy
-    @Autowired
-    private AnalyzerIssueService self;
     private static final int MAX_HISTORY_SIZE = 10;
     private static final int MIN_INPUT_LENGTH = 10;
     private static final int MAX_INPUT_LENGTH = 8_000;
@@ -55,13 +49,12 @@ public class AnalyzerIssueService {
 
         AnalyzeIssueResponse rs = analyseIssueAiService.analyzeIssue(issueText, issueHistory);
         log.info("Analysis result: {}", rs);
-        self.saveIssueReport(rs);
+        saveIssueReport(rs);
         log.info("Analysis saved");
         return rs;
     }
 
-    @Transactional
-    public void saveIssueReport(@NotNull AnalyzeIssueResponse rs) {
+    private void saveIssueReport(@NotNull AnalyzeIssueResponse rs) {
         Objects.requireNonNull(rs);
         analyzeIssueReportRepository.save(analyzeIssueReportMapper.toDocument(rs));
     }
