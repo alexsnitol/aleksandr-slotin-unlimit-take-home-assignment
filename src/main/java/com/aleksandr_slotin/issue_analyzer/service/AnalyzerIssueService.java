@@ -28,9 +28,23 @@ public class AnalyzerIssueService {
     @Autowired
     private AnalyzerIssueService self;
     private static final int MAX_HISTORY_SIZE = 10;
+    private static final int MIN_INPUT_LENGTH = 10;
+    private static final int MAX_INPUT_LENGTH = 8_000;
 
 
     public AnalyzeIssueResponse analyzeIssue(String issueText) {
+        if (issueText == null || issueText.length() < MIN_INPUT_LENGTH) {
+            throw new IllegalArgumentException("Issue text is too short");
+        }
+
+        if (issueText.length() > MAX_INPUT_LENGTH) {
+            throw new IllegalArgumentException("Issue text is too long");
+        }
+
+        if (InjectionPatternFilter.isSuspicious(issueText)) {
+            throw new IllegalArgumentException("Issue text contains suspicious patterns");
+        }
+
         log.info("Analyzing issue: {}", issueText);
         List<AnalyzeIssueReportDto> issueHistory = analyzeIssueReportRepository.findAllByOrderByCreatedAtDesc(
                         Limit.of(MAX_HISTORY_SIZE)
@@ -38,6 +52,7 @@ public class AnalyzerIssueService {
                 .stream()
                 .map(analyzeIssueReportMapper::toDto)
                 .toList();
+
         AnalyzeIssueResponse rs = analyseIssueAiService.analyzeIssue(issueText, issueHistory);
         log.info("Analysis result: {}", rs);
         self.saveIssueReport(rs);

@@ -3,7 +3,6 @@ package com.aleksandr_slotin.issue_analyzer.service;
 import com.aleksandr_slotin.issue_analyzer.dto.AnalyzeIssueReportDto;
 import com.aleksandr_slotin.issue_analyzer.dto.AnalyzeIssueResponse;
 import com.aleksandr_slotin.issue_analyzer.exception.AiException;
-import com.fasterxml.jackson.core.exc.StreamReadException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -16,6 +15,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.core.io.Resource;
 import org.springframework.resilience.annotation.Retryable;
 import org.springframework.stereotype.Service;
+import tools.jackson.core.exc.StreamReadException;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;

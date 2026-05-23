@@ -60,6 +60,8 @@ Return **only** a JSON object (no markdown, no extra text) with the exact struct
 }
 ```
 
+- Output must be valid JSON parseable by `JSON.parse()` without errors!
+
 Rules:
 
 - `category`: concise incident class (e.g., "External payment provider issue", "DB degradation caused by reporting").
