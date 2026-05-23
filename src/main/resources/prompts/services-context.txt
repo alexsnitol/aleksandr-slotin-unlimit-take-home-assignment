@@ -1,0 +1,6 @@
+- api-gateway — receives external HTTP requests and routes them to internal services
+- auth-service — authentication and token issuance
+- payment-service — creation and processing of payment transactions
+- billing-service — balance management and invoicing
+- notification-service — sending e-mail and SMS notifications
+- reporting-service — generating reports and exporting data

@@ -1,3 +1,17 @@
 spring:
   application:
     name: issue-analyzer
+  ai:
+    ollama:
+      base-url: http://localhost:11434
+      request-timeout: 2m
+      chat:
+        options:
+          model: gemma4:e4b
+          temperature: 0.4
+      init:
+        timeout: 2m
+        max-retries: 3
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/issue_analyzer
