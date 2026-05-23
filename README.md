@@ -80,9 +80,9 @@ The core agent workflow is implemented in `AnalyzerIssueService` and `AnalyseIss
    and passed to the AI as context, enabling the model to detect recurring patterns or related past incidents.
 3. **AI analysis** - `AnalyseIssueAiService` sends the current incident text along with the history to the Ollama-hosted
    `gemma4:e4b` model. The model produces a structured analysis response (`AnalyzeIssueResponse`) containing diagnosis,
-   severity assessment, suggested actions, and any detected pattern with past incidents.
-4. **Persistence** - the analysis result is saved back to MongoDB via a `@Transactional` method, so it becomes part of
-   the history for future requests.
+   severity assessment, hypotheses and suggested next steps.
+4. **Persistence** - the analysis result is saved back to MongoDB, so it becomes part of the history for future
+   requests.
 5. **Response** - the structured response is returned to the caller.
 
 This design creates a **feedback loop**: each new incident becomes part of the rolling history window, so the agent
@@ -106,7 +106,7 @@ Incoming Issue Text
         │
         ▼
   Structured AI Response
-  (diagnosis, severity, actions)
+  (diagnosis, severity, hypotheses)
         │
         ▼
    Save to MongoDB
@@ -124,26 +124,28 @@ Incoming Issue Text
 - Used a simple rolling window of 10 recent incidents as context instead of a proper vector store + semantic search (
   RAG). This is less precise for large incident histories but requires zero additional infrastructure.
 - No authentication or multi-tenancy - the API is open and all incidents share a single namespace.
-- No streaming response - the LLM response is awaited synchronously with a 2-minute timeout.
-- Minimal error handling on the AI layer beyond circuit breaking via Resilience4j.
+- Minimal error handling on the AI layer beyond Retry via Resilience4j.
+- Minimal prompt injection protection via a simple regex filter, which is not comprehensive but serves as a basic
+  safeguard.
 
 ### With more time
 
-- Replace the rolling history window with a vector database (e.g., MongoDB Atlas Vector Search or PGVector) and semantic
+- Replace the rolling history window with a vector database and semantic
   similarity search for truly relevant past incident retrieval.
-- Add structured output validation - assert that the LLM response conforms to the expected schema before persisting and
-  returning it.
 - Implement authentication and multi-tenant incident namespaces.
-- Add streaming support to return partial LLM results progressively.
+- Additional LLM-based prompt injection checks beyond the current pattern filter.
+- Hallucination detection via LLM after receiving the model's analysis response (e.g., verify response alignment with
+  the original incident and `service context`).
+- Add code-level JSON parsing recovery to handle malformed responses from smaller models.
+- Evaluate and switch to larger model sizes.
 - Write proper integration tests with a containerized Ollama stub or WireMock.
 
 ***
 
 ## Testing Behavior
 
-Testing was performed manually by submitting incident descriptions via the Swagger UI and observing how the agent's
+Testing was performed manually by submitting incident descriptions via API and observing how the agent's
 response changed as incident history accumulated in MongoDB.
 
-The key aspect under test was that the agent's response quality improved with history: on repeated incidents, it
-correctly referenced prior occurrences and adjusted its recommendations, demonstrating that the rolling history context
-window works as intended.
+The key aspect under test was that, as incident history accumulated, the agent's hypotheses became more specific and its
+next steps more substantive, demonstrating that the rolling history context window works as intended.
