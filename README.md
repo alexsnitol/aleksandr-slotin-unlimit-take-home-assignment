@@ -149,9 +149,13 @@ The core agent workflow is implemented in `AnalyzerIssueService` and `AnalyseIss
 3. **AI analysis** - `AnalyseIssueAiService` sends the current incident text along with the history to the Ollama-hosted
    `gemma4:e4b` model. The model produces a structured analysis response (`AnalyzeIssueResponse`) containing diagnosis,
    severity assessment, hypotheses and suggested next steps.
-4. **Persistence** - the analysis result is saved back to MongoDB, so it becomes part of the history for future
+4. **Response validation** - the structured response is validated against expected formats. If the response is invalid (
+   e.g., malformed JSON, missing fields), a retry mechanism with a refined prompt that includes error feedback to guide
+   the model towards producing valid output. 3 retry attempts are made before giving up and returning an error to the
+   caller.
+5. **Persistence** - the analysis result is saved back to MongoDB, so it becomes part of the history for future
    requests.
-5. **Response** - the structured response is returned to the caller.
+6. **Response** - the structured response is returned to the caller.
 
 This design creates a **feedback loop**: each new incident becomes part of the rolling history window, so the agent
 continuously improves its contextual awareness of recurring issues without requiring a full vector database or RAG
@@ -177,6 +181,12 @@ Incoming Issue Text
   (diagnosis, severity, hypotheses)
         │
         ▼
+  Validate & Parse Response
+        │
+        ▼
+ Handle Errors (retry with repair prompt) (3x retry)
+        │
+        ▼
    Save to MongoDB
         │
         ▼
@@ -192,7 +202,7 @@ Incoming Issue Text
 - Used a simple rolling window of 10 recent incidents as context instead of a proper vector store + semantic search (
   RAG). This is less precise for large incident histories but requires zero additional infrastructure.
 - No authentication or multi-tenancy - the API is open and all incidents share a single namespace.
-- Minimal error handling on the AI layer beyond Retry via Resilience4j.
+- Error handling on the AI layer beyond Retry via repair prompt.
 - Minimal prompt injection protection via a simple regex filter, which is not comprehensive but serves as a basic
   safeguard.
 
@@ -215,5 +225,14 @@ Incoming Issue Text
 Testing was performed manually by submitting incident descriptions via API and observing how the agent's
 response changed as incident history accumulated in MongoDB.
 
-The key aspect under test was that, as incident history accumulated, the agent's hypotheses became more specific and its
-next steps more substantive, demonstrating that the rolling history context window works as intended.
+To ensure broad coverage of failure scenarios, a set of 30 different synthetic test incidents was generated with
+the help of an LLM. The incidents cover all platform services (api-gateway, auth-service, payment-service,
+billing-service, notification-service, reporting-service) and include diverse failure types: external
+provider outages, database degradation, misconfiguration errors, resource exhaustion, and cascading failures
+across the service graph. Each incident was submitted to the agent via the API, and the quality of the
+output — classification accuracy, severity assessment, hypothesis relevance, and actionability of next
+steps — was evaluated manually.
+
+The key aspect under test was that, as incident history accumulated, the agent's hypotheses became more
+specific and its next steps more substantive, demonstrating that the rolling history context window works
+as intended.
