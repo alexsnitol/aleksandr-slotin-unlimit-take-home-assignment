@@ -1,17 +1,16 @@
 spring:
   application:
-    name: issue-analyzer
+    name: ${SPRING_APPLICATION_NAME:issue-analyzer}
   ai:
     ollama:
-      base-url: http://localhost:11434
+      base-url: ${SPRING_AI_OLLAMA_BASE_URL:http://localhost:11434}
       request-timeout: 2m
       chat:
         options:
-          model: gemma4:e4b
-          temperature: 0.4
+          model: ${SPRING_AI_OLLAMA_CHAT_OPTIONS_MODEL:gemma4:e4b}
+          temperature: ${SPRING_AI_OLLAMA_CHAT_OPTIONS_TEMPERATURE:0.4}
       init:
         timeout: 2m
         max-retries: 3
-  data:
-    mongodb:
-      uri: mongodb://localhost:27017/issue_analyzer
+  mongodb:
+    uri: ${SPRING_DATA_MONGODB_URI:mongodb://localhost:27017/issue_analyzer}

@@ -1,0 +1,31 @@
+# Maven
+target/
+.classpath
+.project
+.settings/
+.sts4-cache/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+
+# Docker volumes data (optional - uncomment if you want to persist)
+# mongodb_data/
+# ollama_data/
+
+# Application logs
+*.log
+logs/
+

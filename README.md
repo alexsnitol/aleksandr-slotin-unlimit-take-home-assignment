@@ -22,26 +22,94 @@ AI**, **Ollama (gemma4:e4b)**, and **MongoDB** for persistent incident history.
 
 ## How to Run
 
-### Prerequisites
+### Quick Start with Docker Compose
+
+The easiest way to run the entire application is with Docker Compose, which automatically handles all dependencies (
+MongoDB, Ollama, and the Spring Boot application).
+
+#### Prerequisites
+
+- [Docker](https://www.docker.com/products/docker-desktop) and Docker Compose installed
+- 20GB+ free disk space (for Ollama model and MongoDB data)
+
+#### Steps
+
+1. **Clone and navigate to the project:**
+   ```bash
+   cd aleksandr-slotin-unlimit-take-home-assignment
+   ```
+
+2. **Optional: Configure environment variables** (if you want to customize ports or settings):
+   ```bash
+   cp .env.example .env
+   # Edit .env if needed
+   ```
+
+3. **Start all services with a single command:**
+   ```bash
+   docker-compose up
+   ```
+
+   This will:
+    - Start MongoDB (listening on `localhost:27017`)
+    - Start Ollama and automatically pull the `gemma4:e4b` model
+    - Build and start the Spring Boot application (listening on `localhost:8080`)
+
+4. **Wait for initialization** - On first run, Ollama will pull the model (~1-2 minutes). You'll see:
+   ```
+   ollama | pulling 58cc104c2dac
+   ollama | pulling ...
+   ```
+   Once completed and the app is healthy, you'll see:
+   ```
+   app | Started IssueAnalyzerApplication
+   ```
+
+5. **Open Swagger UI** to interact with the API:
+   ```
+   http://localhost:8080/swagger-ui/index.html
+   ```
+
+6. **Stop the application:**
+   ```bash
+   docker-compose down
+   ```
+
+   Or to also remove data volumes:
+   ```bash
+   docker-compose down -v
+   ```
+
+---
+
+### Manual Setup (Local Development)
+
+If you prefer to run services locally without Docker:
+
+#### Prerequisites
 
 - Java 21+
 - Maven 3.8+
 - [Ollama](https://ollama.com/) installed and running locally
 - MongoDB instance available
 
-### Steps
+#### Steps
 
-1. **Pull the required Ollama model:**
+1. **Start Ollama service** and pull the required model:
+   ```bash
+   ollama serve
+   ```
+   In another terminal:
    ```bash
    ollama pull gemma4:e4b
    ```
 
-2. **Start MongoDB** (using Docker Compose):
+2. **Start MongoDB** (using Docker Compose or locally):
    ```bash
-   docker-compose up -d
+   docker-compose up mongodb -d
    ```
 
-3. **Configure connection settings** in `src/main/resources/application.yaml` (defaults shown below):
+3. **Update connection settings** in `src/main/resources/application.yaml`:
    ```yaml
    spring:
      ai:
